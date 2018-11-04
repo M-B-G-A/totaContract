@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "map": "cpp",
+        "set": "cpp",
+        "vector": "cpp"
+    }
+}
