@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/local/eosio.cdt/include/**",
-                "/usr/local/opt/eosio.cdt/opt/eosio.cdt/include/**"
+                "/usr/local/opt/eosio.cdt/opt/eosio.cdt/include/**",
+                "/usr/local/Cellar/eosio.cdt/1.4.0/opt/eosio.cdt/include"
             ],
             "defines": [],
             "macFrameworkPath": [
