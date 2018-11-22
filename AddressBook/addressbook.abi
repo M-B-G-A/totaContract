@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Nov 23 00:18:16 2018",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Nov 23 01:56:44 2018",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -9,6 +9,20 @@
                 {
                     "name": "user",
                     "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "notify",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "msg",
+                    "type": "string"
                 }
             ]
         },
@@ -39,6 +53,10 @@
                 {
                     "name": "state",
                     "type": "string"
+                },
+                {
+                    "name": "age",
+                    "type": "uint64"
                 }
             ]
         },
@@ -57,6 +75,10 @@
                 {
                     "name": "last_name",
                     "type": "string"
+                },
+                {
+                    "name": "age",
+                    "type": "uint64"
                 },
                 {
                     "name": "street",
@@ -78,6 +100,11 @@
         {
             "name": "erase",
             "type": "erase",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "notify",
+            "type": "notify",
             "ricardian_contract": ""
         },
         {
