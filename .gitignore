@@ -1,3 +1,4 @@
 *.wasm
 *.abi
 eosrun
+*/.DS_Store
