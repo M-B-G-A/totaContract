@@ -1,4 +1,4 @@
-contract votegame
+table game_info
 ===
 **key** (uint64_t) 숫자
 **game_name** (std::string) 스트링
@@ -10,10 +10,11 @@ contract votegame
 **team1** (name) 팀 이름
 **team2** (name) 팀 이름
 
-contract user_history
+table user_history
 ===
 **key** (uint64_t) 숫자
 **user** (name) 
 **game_key** (uint64_t) 숫자
+**side** (uint64_t) 베팅 사이드 (1 or 2)
 **amount** (asset) 베팅
 **timestamp** (uint64_t) 시간 millis
