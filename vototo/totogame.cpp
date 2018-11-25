@@ -1,0 +1,96 @@
+#include <eosiolib/eosio.hpp>
+#include <eosiolib/name.hpp>
+
+using namespace eosio;
+
+class [[eosio::contract]] userhistory : public eosio::contract {
+
+  public:
+    userhistory(name receiver, name code, datastream<const char*> ds):contract(receiver, code, ds) {}
+    
+    [[eosio::action]]
+    void upsert(name user, std::string first_name, std::string last_name, uint64_t age, std::string street, std::string city, std::string state) {
+        require_auth( user );
+        address_index addresses(_code, _code.value);
+        auto iterator = addresses.find(user.value);
+        if( iterator == addresses.end() )
+        {
+            addresses.emplace(user, [&]( auto& row ) {
+                row.key = user;
+                row.first_name = first_name;
+                row.last_name = last_name;
+                row.street = street;
+                row.city = city;
+                row.state = state;
+                row.age = age;
+            });
+            send_summary(user, " successfully emplaced record to addressbook");
+            increment_counter(user, "emplace");
+        }
+        else {
+            std::string changes;
+            addresses.modify(iterator, user, [&]( auto& row ) {
+                row.key = user;
+                row.first_name = first_name;
+                row.last_name = last_name;
+                row.street = street;
+                row.city = city;
+                row.state = state;
+                row.age = age;
+            });
+            send_summary(user, " successfully modified record to addressbook");
+            increment_counter(user, "modify");
+        }
+    }
+
+    [[eosio::action]]
+    void erase(name user) {
+        require_auth(user);
+        address_index addresses(_code, _code.value);
+        auto iterator = addresses.find(user.value);
+        eosio_assert(iterator != addresses.end(), "Record does not exist");
+        addresses.erase(iterator);
+        send_summary(user, " successfully erased record from addressbook");
+        increment_counter(user, "erase");
+    }
+
+    [[eosio::action]]
+    void notify(name user, std::string msg) {
+        require_auth(get_self());
+        require_recipient(user);
+    }
+
+  private:
+    void send_summary(name user, std::string message) {
+        action(
+            permission_level{get_self(), name("active")},
+            get_self(),
+            name("notify"),
+            std::make_tuple(user, name{user}.to_string() + message)
+        ).send();
+    }
+
+    void increment_counter(name user, std::string type) {
+        action(
+            permission_level{get_self(), name("active")},
+            name("abcounter"),
+            name("count"),
+            std::make_tuple(user, type)
+        ).send();
+    }
+
+    struct [[eosio::table]] userhistory {
+        uint64_t key;
+        name account_name;
+        uint64_t game_number;
+        uint64_t betting_amount
+
+        uint64_t primary_key() const { return key;}
+        uint64_t get_secondary_1() const { return account_name;}
+    };
+  
+    typedef eosio::multi_index<name("people"), person,
+        indexed_by<name("byage"), const_mem_fun<person, uint64_t, &person::get_secondary_1>>
+    > address_index;
+};
+
