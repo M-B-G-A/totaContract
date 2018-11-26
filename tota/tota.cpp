@@ -1,6 +1,7 @@
 #include <eosiolib/eosio.hpp>
 #include <eosiolib/name.hpp>
 #include <eosiolib/asset.hpp>
+#include "eosio.token.hpp"
 
 using namespace eosio;
 
@@ -43,6 +44,31 @@ class [[eosio::contract]] tota : public eosio::contract {
         }
     }
 
+    [[eosio::action]]
+    void insertcoin(name user, asset amount, uint64_t game_key, uint64_t side) {
+        require_auth(user);
+        const symbol sym(symbol_code("EOS"), 4);
+        asset eos_get = eosio::token::get_balance(name("eosio.token"), user, sym.code());
+        if(amount.amount <= eos_get.amount) {
+            action(
+                permission_level{user, name("active")},
+                name("eosio.token"),
+                name("transfer"),
+                std::make_tuple(user, get_self(), amount, std::string("attend tota"))
+            ).send();
+            auto timestamp = current_time() / uint64_t(1000);
+            histories_table histories(_code, _code.value);
+            histories.emplace(user, [&](auto& row) {
+                row.key = histories.available_primary_key();
+                row.user = user;
+                row.game_key = game_key;
+                row.side = side;
+                row.amount = amount;
+                row.timestamp = timestamp;
+            });
+        }
+    }
+
     private:
         struct [[eosio::table]] game_info {
             uint64_t key;
@@ -72,10 +98,10 @@ class [[eosio::contract]] tota : public eosio::contract {
     
         typedef eosio::multi_index<name("games"), game_info> games_table;
 
-        typedef eosio::multi_index<name("hitories"), user_history,
+        typedef eosio::multi_index<name("histories"), user_history,
             indexed_by<name("byaccount"), const_mem_fun<user_history, uint64_t, &user_history::get_secondary_1>>
         > histories_table;
 };
 
-EOSIO_DISPATCH(tota, (insertgame), (pushresult))
+EOSIO_DISPATCH(tota, (insertgame)(pushresult)(insertcoin))
 
