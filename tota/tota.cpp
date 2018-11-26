@@ -29,6 +29,20 @@ class [[eosio::contract]] tota : public eosio::contract {
         }
     }
 
+    [[eosio::action]]
+    void pushresult(name user, uint64_t game_key, uint64_t result) {
+        require_auth(user);
+        if(user.to_string() == "totagamelist") {
+            games_table games(_code, _code.value);
+            auto game = games.find(game_key);
+            if(game != games.end()) {
+                games.modify(game, user, [&]( auto& row ) {
+                    row.result = result;
+                });
+            }
+        }
+    }
+
     private:
         struct [[eosio::table]] game_info {
             uint64_t key;
@@ -63,5 +77,5 @@ class [[eosio::contract]] tota : public eosio::contract {
         > histories_table;
 };
 
-EOSIO_DISPATCH(tota, (insertgame))
+EOSIO_DISPATCH(tota, (insertgame), (pushresult))
 
