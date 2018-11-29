@@ -43,17 +43,21 @@ table user_history
 Action
 ===
 **게임 넣기** : 컨트랙트 유저 권한(totagamelist와 같이)
+
 insertgame(name user, std::string game_name, uint64_t game_type, uint64_t start_time,
         uint64_t end_time, uint64_t result_time, std::string team1, std::string team2)
 
 **게임 결과 넣기** : 컨트랙트 유저 권한(totagamelist와 같이)
+
 pushresult(name user, uint64_t game_key, uint64_t result)
 
 
 **베팅하기** : 일반 유저 권한, 컨트랙트의 가상권한 eosio.code 승인 필요
+
 insertcoin(name user, asset amount, uint64_t game_key, uint64_t side)
 
 **배당받기** : 일반 유저 권한
+
 dropcoin(name user, uint64_t game_key, uint64_t history_key)
 
 
