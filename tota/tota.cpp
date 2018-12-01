@@ -110,7 +110,8 @@ class [[eosio::contract]] tota : public eosio::contract {
         auto game = games.find(game_key);
         eosio_assert(game != games.end(), "Game key does not match!");
         auto result = game->result;
-        eosio_assert(result == 0, "Result is not yet available!");
+        eosio_assert(current_time() / uint64_t(1000) > game->result_time, "Result is not yet available!");
+        eosio_assert(result != 0, "Result is not yet available!");
         if(history->side != result) {
             histories.modify(history, _code, [&](auto& row) {
                 row.status = 1;
