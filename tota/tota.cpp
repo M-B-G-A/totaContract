@@ -16,7 +16,7 @@ class [[eosio::contract]] tota : public eosio::contract {
         require_auth(user);
         eosio_assert(user.value == _code.value, "This action should be occured by contract permission");
         games_table games(_code, _code.value);
-        games.emplace(user, [&](auto& row) {
+        games.emplace(_code, [&](auto& row) {
             row.key = games.available_primary_key();
             row.game_name = game_name;
             row.game_type = game_type;
@@ -38,7 +38,7 @@ class [[eosio::contract]] tota : public eosio::contract {
         games_table games(_code, _code.value);
         auto game = games.find(game_key);
         eosio_assert(game != games.end(), "Game key does not match!");
-        games.modify(game, user, [&]( auto& row ) {
+        games.modify(game, _code, [&]( auto& row ) {
             row.result = result;
         });
     }
@@ -57,23 +57,33 @@ class [[eosio::contract]] tota : public eosio::contract {
         auto timestamp = current_time() / uint64_t(1000);
         eosio_assert(timestamp >= game->start_time, "You can`t bet now, because time is ealier.");
         eosio_assert(timestamp <= game->end_time, "You can`t bet now, because time has passed.");
-        games.modify(game, user, [&](auto& row) {
-            action(
-                permission_level{user, name("active")},
-                name("eosio.token"),
-                name("transfer"),
-                std::make_tuple(user, get_self(), amount, std::string("attend tota"))
-            ).send();
+        games.modify(game, _code, [&](auto& row) {
             histories_table histories(_code, _code.value);
-            histories.emplace(user, [&](auto& row) {
-                row.key = histories.available_primary_key();
-                row.user = user;
-                row.game_key = game_key;
-                row.side = side;
-                row.amount = amount;
-                row.timestamp = timestamp;
-                row.status = 0;
-            });
+            auto iter = histories.begin();
+            while(iter != histories.end()) {
+                if(iter->user == user && iter->game_key == game_key) {
+                    eosio_assert(iter->side == side, "If you want to bet more, you should bet at same side!");
+                    receiveEOS(user, amount);
+                    histories.modify(iter, _code, [&](auto& history) {
+                        history.timestamp = timestamp;
+                        history.amount += amount;
+                    });
+                    break;
+                }
+                ++iter;
+            }
+            if(iter == histories.end()) {
+                receiveEOS(user, amount);
+                histories.emplace(_code, [&](auto& history) {
+                    history.key = histories.available_primary_key();
+                    history.user = user;
+                    history.game_key = game_key;
+                    history.side = side;
+                    history.amount = amount;
+                    history.timestamp = timestamp;
+                    history.status = 0;
+                });
+            }
             if(side == 1) {
                 row.team1_asset += amount;
             } else if(side == 2) {
@@ -83,10 +93,16 @@ class [[eosio::contract]] tota : public eosio::contract {
     }
 
     [[eosio::action]]
-    void dropcoin(name user, uint64_t game_key, uint64_t history_key) {
+    void dropcoin(name user, uint64_t game_key) {
         require_auth(user);
         histories_table histories(_code, _code.value);
-        auto history = histories.find(history_key);
+        auto history = histories.begin();
+        while(history != histories.end()) {
+            if(history->user == user && history->game_key == game_key) {
+                break;
+            }
+            ++history;
+        }
         eosio_assert(history != histories.end(), "History key does not match!");
         eosio_assert(user == history->user, "You`re not owner of this history!");
         eosio_assert(history->status == 0, "Already refunded");
@@ -96,7 +112,7 @@ class [[eosio::contract]] tota : public eosio::contract {
         auto result = game->result;
         eosio_assert(result == 0, "Result is not yet available!");
         if(history->side != result) {
-            histories.modify(history, user, [&](auto& row) {
+            histories.modify(history, _code, [&](auto& row) {
                 row.status = 1;
             });
         } else {
@@ -116,7 +132,7 @@ class [[eosio::contract]] tota : public eosio::contract {
                 std::make_tuple(get_self(), user, receiving, std::string("receiving from tota"))
             ).send();
 
-            histories.modify(history, user, [&](auto& row) {
+            histories.modify(history, _code, [&](auto& row) {
                 row.status = 1;
             });
         }
@@ -157,6 +173,15 @@ class [[eosio::contract]] tota : public eosio::contract {
         typedef eosio::multi_index<name("histories2"), user_history,
             indexed_by<name("byaccount"), const_mem_fun<user_history, uint64_t, &user_history::get_secondary_1>>
         > histories_table;
+
+        void receiveEOS(name user, asset amount) {
+            action(
+                permission_level{user, name("active")},
+                name("eosio.token"),
+                name("transfer"),
+                std::make_tuple(user, get_self(), amount, std::string("attend tota"))
+            ).send();
+        }
 };
 
 EOSIO_DISPATCH(tota, (insertgame)(pushresult)(insertcoin)(dropcoin))
