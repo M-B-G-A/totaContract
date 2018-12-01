@@ -44,9 +44,13 @@ class [[eosio::contract]] tota : public eosio::contract {
     }
 
     [[eosio::action]]
-    void insertcoin(name user, asset amount, uint64_t game_key, uint64_t side) {
+    void insertcoin(name user, asset amount, uint64_t game_key, name _side) {
         require_auth(user);
-        eosio_assert(side == 1 || side == 2, "You bet at wrong side!");
+        eosio_assert(_side == name("totaproxyno1") || _side == name("totaproxyno2"), "You bet at wrong side!");
+        uint64_t side = 2;
+        if(_side == name("totaproxyno1")) {
+            side = 1;
+        }
         const symbol sym(symbol_code("EOS"), 4);
         eosio_assert(amount.symbol == sym, "Your input balance is not match with symbol 'EOS'.");
         asset eos_get = eosio::token::get_balance(name("eosio.token"), user, sym.code());
