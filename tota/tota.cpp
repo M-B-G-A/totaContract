@@ -125,12 +125,7 @@ class [[eosio::contract]] tota : public eosio::contract {
                 receiving = (receiving * (team1_asset.amount + team2_asset.amount)) / team2_asset.amount;
             }
 
-            action(
-                permission_level{get_self(), name("active")},
-                name("eosio.token"),
-                name("transfer"),
-                std::make_tuple(get_self(), user, receiving, std::string("receiving from tota"))
-            ).send();
+            sendEOS(user, receiving);
 
             histories.modify(history, _code, [&](auto& row) {
                 row.status = 1;
@@ -165,13 +160,13 @@ class [[eosio::contract]] tota : public eosio::contract {
             uint64_t status;
 
             uint64_t primary_key() const { return key; }
-            uint64_t get_secondary_1() const { return user.value; }
+            uint64_t by_account() const { return user.value; }
         };
     
         typedef eosio::multi_index<name("games2"), game_info> games_table;
 
         typedef eosio::multi_index<name("histories2"), user_history,
-            indexed_by<name("byaccount"), const_mem_fun<user_history, uint64_t, &user_history::get_secondary_1>>
+            indexed_by<name("byaccount"), const_mem_fun<user_history, uint64_t, &user_history::by_account>>
         > histories_table;
 
         void receiveEOS(name user, asset amount) {
@@ -180,6 +175,15 @@ class [[eosio::contract]] tota : public eosio::contract {
                 name("eosio.token"),
                 name("transfer"),
                 std::make_tuple(user, get_self(), amount, std::string("attend tota"))
+            ).send();
+        }
+
+        void sendEOS(name user, asset amount) {
+            action(
+                permission_level{get_self(), name("active")},
+                name("eosio.token"),
+                name("transfer"),
+                std::make_tuple(get_self(), user, amount, std::string("receiving from tota"))
             ).send();
         }
 };
