@@ -26,8 +26,8 @@ class [[eosio::contract]] tota : public eosio::contract {
             row.result = 0;
             row.team1 = name(team1);
             row.team2 = name(team2);
-            row.team1_asset = asset(0, symbol(symbol_code("EOS"), 4));
-            row.team2_asset = asset(0, symbol(symbol_code("EOS"), 4));
+            row.team1_asset = asset(1, symbol(symbol_code("EOS"), 4));
+            row.team2_asset = asset(1, symbol(symbol_code("EOS"), 4));
         });
     }
 
